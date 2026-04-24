@@ -1,10 +1,11 @@
 const JobStatus = require('../../domain/job/JobStatus');
 
+
 const VALID_TRANSITIONS = {
-  [JobStatus.QUEUED]: [JobStatus.IN_PROGRESS, JobStatus.ERROR],
+  [JobStatus.QUEUED]:      [JobStatus.IN_PROGRESS, JobStatus.ERROR],
   [JobStatus.IN_PROGRESS]: [JobStatus.DONE, JobStatus.ERROR],
-  [JobStatus.DONE]: [],
-  [JobStatus.ERROR]: []
+  [JobStatus.DONE]:        [],
+  [JobStatus.ERROR]:       []
 };
 
 class UpdateJobStatusUseCase {
