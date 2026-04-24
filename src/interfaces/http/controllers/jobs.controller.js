@@ -2,6 +2,8 @@ const SQLiteJobRepository = require('../../../infrastructure/database/repositori
 const CreateJobUseCase = require('../../../application/job/CreateJobUseCase');
 const GetJobByIdUseCase = require('../../../application/job/GetJobByIdUseCase');
 const ListJobsUseCase = require('../../../application/job/ListJobsUseCase');
+const UpdateJobStatusUseCase = require('../../../application/job/UpdateJobStatusUseCase');
+const ProcessNextJobUseCase = require('../../../application/job/ProcessNextJobUseCase');
 
 const jobRepository = new SQLiteJobRepository();
 
@@ -41,8 +43,36 @@ async function listJobs(req, res) {
   }
 }
 
+async function updateStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status, errorMessage } = req.body;
+    const useCase = new UpdateJobStatusUseCase(jobRepository);
+    const job = await useCase.execute(id, status, errorMessage);
+    return res.status(200).json(job);
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({ error: error.message });
+  }
+}
+
+async function processNext(req, res) {
+  try {
+    const useCase = new ProcessNextJobUseCase(jobRepository);
+    const job = await useCase.execute();
+    if (!job) {
+      return res.status(204).send();
+    }
+    return res.status(200).json(job);
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 module.exports = {
   createJob,
   getJob,
-  listJobs
+  listJobs,
+  updateStatus,
+  processNext
 };
