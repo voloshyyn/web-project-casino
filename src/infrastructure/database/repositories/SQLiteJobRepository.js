@@ -90,6 +90,42 @@ class SQLiteJobRepository extends JobRepository {
       });
     });
   }
+  async findAll(filters = {}) {
+    let query = 'SELECT * FROM jobs';
+    const conditions = [];
+    const params = [];
+
+    if (filters.status) {
+      conditions.push('status = ?');
+      params.push(filters.status);
+    }
+    if (filters.userId) {
+      conditions.push('user_id = ?');
+      params.push(filters.userId);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    return new Promise((resolve, reject) => {
+      db.all(query, params, (err, rows) => {
+        if (err) return reject(err);
+        resolve((rows || []).map(row => new Job({
+          id: row.id,
+          userId: row.user_id,
+          gameId: row.game_id,
+          amount: row.amount,
+          status: row.status,
+          errorMessage: row.error_message,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at
+        })));
+      });
+    });
+  }
 }
 
 module.exports = SQLiteJobRepository;

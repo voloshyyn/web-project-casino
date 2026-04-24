@@ -14,6 +14,10 @@ class JobRepository {
   async dequeueNext() {
     throw new Error('Method not implemented: dequeueNext');
   }
+
+  async findAll(filters = {}) {
+    throw new Error('Method not implemented: findAll');
+  }
 }
 
 module.exports = JobRepository;
