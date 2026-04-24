@@ -1,7 +1,7 @@
 const JobStatus = require('./JobStatus');
 
 class Job {
-  constructor({ id, userId, gameId, amount, status = JobStatus.CREATED, errorMessage = null, createdAt, updatedAt }) {
+  constructor({ id, userId, gameId, amount, status = JobStatus.QUEUED, errorMessage = null, createdAt, updatedAt }) {
     this.id = id;
     this.userId = userId;
     this.gameId = gameId;

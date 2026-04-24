@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   user_id TEXT NOT NULL,
   game_id TEXT NOT NULL,
   amount REAL NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('CREATED', 'QUEUED', 'PROCESSING', 'DONE', 'ERROR')),
+  status TEXT NOT NULL CHECK (status IN ('QUEUED', 'IN_PROGRESS', 'DONE', 'ERROR')),
   error_message TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
