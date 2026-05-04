@@ -24,12 +24,22 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "better-sqlite3": "^9.2.2",
     "dotenv": "^16.5.0",
-    "express": "^4.21.2",
-    "sqlite": "^5.1.1",
-    "sqlite3": "^5.1.7"
+    "express": "^4.22.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voloshyyn/web-project-casino.git"
+  },
+  "bugs": {
+    "url": "https://github.com/voloshyyn/web-project-casino/issues"
+  },
+  "homepage": "https://github.com/voloshyyn/web-project-casino#readme"
 }

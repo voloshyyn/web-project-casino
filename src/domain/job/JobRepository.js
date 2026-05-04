@@ -14,6 +14,10 @@ class JobRepository {
   async findAllByUserId(userId) {
     throw new Error('Method not implemented: findAllByUserId');
   }
+
+  async findByStatus(status) {
+    throw new Error('Method not implemented: findByStatus');
+  }
 }
 
 module.exports = JobRepository;

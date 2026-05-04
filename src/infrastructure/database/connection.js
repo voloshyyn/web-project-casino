@@ -1,8 +1,25 @@
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const Database = require('better-sqlite3');
+const config = require('../../config/env');
 
-const dbPath = path.resolve(process.cwd(), 'data', 'casino.db');
+// Ensure data directory exists
+const dbDir = path.resolve(process.cwd(), 'data');
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
-const db = new sqlite3.Database(dbPath);
+const dbPath = path.resolve(dbDir, 'casino.db');
+
+// Initialize better-sqlite3 connection with options
+const db = new Database(dbPath, {
+  timeout: 5000,
+  verbose: config.LOG_LEVEL === 'debug' ? console.log : undefined
+});
+
+// Enable foreign keys and WAL mode for concurrent access
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+db.pragma('synchronous = NORMAL');
 
 module.exports = db;
