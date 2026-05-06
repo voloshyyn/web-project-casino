@@ -46,7 +46,35 @@ function listJobs(req, res, next) {
   }
 }
 
+function getJobById(req, res, next) {
+  try {
+    const GetJobByIdUseCase = require('../../../application/job/GetJobByIdUseCase');
+    const SQLiteJobRepository = require('../../../infrastructure/database/repositories/SQLiteJobRepository');
+
+    const repository = new SQLiteJobRepository();
+    const getJobUseCase = new GetJobByIdUseCase(repository);
+
+    const userId = req.userId; // From userScope middleware
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id) || id <= 0) {
+      return res.status(400).json({ message: 'Invalid job id' });
+    }
+
+    const job = getJobUseCase.execute({ id, userId });
+
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    res.status(200).json(job);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createJob,
-  listJobs
+  listJobs,
+  getJobById
 };
