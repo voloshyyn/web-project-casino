@@ -15,14 +15,15 @@ class SQLiteJobRepository extends JobRepository {
 			const now = new Date().toISOString();
       
 			const stmt = db.prepare(
-				`INSERT INTO jobs (user_id, game_id, amount, status, result, created_at, updated_at)
-				 VALUES (?, ?, ?, ?, ?, ?, ?)`
+				`INSERT INTO jobs (user_id, game_id, amount, request_id, status, result, created_at, updated_at)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 			);
 
 			const info = stmt.run(
 				job.userId,
 				job.gameId,
 				job.amount,
+				job.requestId || null,
 				job.status,
 				job.result || null,
 				now,
@@ -35,6 +36,7 @@ class SQLiteJobRepository extends JobRepository {
 				userId: job.userId,
 				gameId: job.gameId,
 				amount: job.amount,
+				requestId: job.requestId || null,
 				status: job.status,
 				result: job.result || null,
 				createdAt: now,
@@ -42,6 +44,31 @@ class SQLiteJobRepository extends JobRepository {
 			});
 		} catch (error) {
 			throw new Error(`Failed to create job: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Find a job by its idempotency key
+	 * @param {Object} params - Query parameters
+	 * @param {string} params.userId - User ID
+	 * @param {string} params.requestId - Idempotency key
+	 * @returns {Job|null} The found job or null
+	 */
+	findByRequestId({ userId, requestId }) {
+		try {
+			const stmt = db.prepare(
+				`SELECT * FROM jobs WHERE user_id = ? AND request_id = ? LIMIT 1`
+			);
+
+			const row = stmt.get(userId, requestId);
+
+			if (!row) {
+				return null;
+			}
+
+			return this._rowToJob(row);
+		} catch (error) {
+			throw new Error(`Failed to find job by request ID: ${error.message}`);
 		}
 	}
 
@@ -83,6 +110,7 @@ class SQLiteJobRepository extends JobRepository {
 				userId: existing.userId,
 				gameId: existing.gameId,
 				amount: existing.amount,
+				requestId: existing.requestId,
 				status: status,
 				result: result || null,
 				createdAt: existing.createdAt,
@@ -177,6 +205,7 @@ class SQLiteJobRepository extends JobRepository {
 			userId: row.user_id,
 			gameId: row.game_id,
 			amount: row.amount,
+			requestId: row.request_id || null,
 			status: row.status,
 			result: row.result || null,
 			createdAt: row.created_at,

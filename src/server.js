@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 const config = require('./config/env');
+const { ensureJobsRequestIdSchema } = require('./infrastructure/database/migrations/ensureJobsRequestIdSchema');
 
 function runMigrations() {
   try {
@@ -36,6 +37,8 @@ function runMigrations() {
       });
       console.log(`[DB] ✓ Applied migration: ${file}`);
     });
+
+    ensureJobsRequestIdSchema(db);
 
     console.log('[DB] ✓ All migrations completed successfully.');
     db.close();

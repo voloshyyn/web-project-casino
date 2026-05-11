@@ -3,6 +3,10 @@ class JobRepository {
     throw new Error('Method not implemented: create');
   }
 
+  async findByRequestId({ userId, requestId }) {
+    throw new Error('Method not implemented: findByRequestId');
+  }
+
   async updateStatus({ id, userId, status, errorMessage = null }) {
     throw new Error('Method not implemented: updateStatus');
   }

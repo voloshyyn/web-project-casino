@@ -29,11 +29,19 @@ Response will contain `token` and `userId`.
 curl -s -X POST http://localhost:3000/api/jobs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token>" \
+  -H "Idempotency-Key: bet-123" \
   -d '{"gameId":"g1","amount":10}'
 
 curl -s -X GET http://localhost:3000/api/jobs \
   -H "Authorization: Bearer <token>"
 ```
+
+The POST `/api/jobs` endpoint now queues the bet request in RabbitMQ and returns immediately with a queued job. Reusing the same `Idempotency-Key` for the same user returns the existing job instead of publishing a duplicate message.
+
+Set these env vars for the broker:
+
+- `RABBITMQ_URL=amqp://localhost`
+- `RABBITMQ_QUEUE=game.requests`
 
 Automated test
 

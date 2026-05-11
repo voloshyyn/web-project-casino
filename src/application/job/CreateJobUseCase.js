@@ -1,6 +1,8 @@
 class CreateJobUseCase {
-  constructor(jobRepository) {
+  constructor(jobRepository, messagePublisher, queueName) {
     this.jobRepository = jobRepository;
+    this.messagePublisher = messagePublisher;
+    this.queueName = queueName;
   }
 
   /**
@@ -12,7 +14,7 @@ class CreateJobUseCase {
    * @returns {Job} Created job with CREATED status
    * @throws {ValidationError} If amount is invalid
    */
-  execute(payload) {
+  async execute(payload) {
     const ValidationError = require('../../shared/errors/ValidationError');
     const Job = require('../../domain/job/Job');
     const JobStatus = require('../../domain/job/JobStatus');
@@ -27,17 +29,81 @@ class CreateJobUseCase {
       throw new ValidationError('amount must be a positive number', 400);
     }
 
+    if (!payload.requestId || typeof payload.requestId !== 'string' || !payload.requestId.trim()) {
+      throw new ValidationError('requestId is required for idempotency', 400);
+    }
+
+    const requestId = payload.requestId.trim();
+
+    const existingJob = await this.jobRepository.findByRequestId({
+      userId: payload.userId,
+      requestId
+    });
+
+    if (existingJob) {
+      return {
+        job: existingJob,
+        wasCreated: false
+      };
+    }
+
     // Create Job domain object with CREATED status
     const job = new Job({
       userId: payload.userId,
       gameId: payload.gameId,
       amount: payload.amount,
+      requestId,
       status: JobStatus.CREATED,
       result: null
     });
 
-    // Persist to repository
-    return this.jobRepository.create(job);
+    let createdJob;
+
+    try {
+      createdJob = await this.jobRepository.create(job);
+    } catch (error) {
+      if (error.message.includes('UNIQUE constraint failed')) {
+        const duplicateJob = await this.jobRepository.findByRequestId({
+          userId: payload.userId,
+          requestId
+        });
+
+        if (duplicateJob) {
+          return {
+            job: duplicateJob,
+            wasCreated: false
+          };
+        }
+      }
+
+      throw error;
+    }
+
+    try {
+      await this.messagePublisher.publishToQueue(this.queueName, {
+        jobId: createdJob.id,
+        requestId: createdJob.requestId,
+        userId: createdJob.userId,
+        gameId: createdJob.gameId,
+        amount: createdJob.amount
+      });
+    } catch (error) {
+      const brokerError = new Error(`Failed to publish job ${createdJob.id} to RabbitMQ: ${error.message}`);
+      brokerError.statusCode = 503;
+      brokerError.cause = error;
+      throw brokerError;
+    }
+
+    const queuedJob = await this.jobRepository.updateStatus({
+      id: createdJob.id,
+      userId: createdJob.userId,
+      status: JobStatus.QUEUED
+    });
+
+    return {
+      job: queuedJob,
+      wasCreated: true
+    };
   }
 }
 

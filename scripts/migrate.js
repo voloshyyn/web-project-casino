@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
+const { ensureJobsRequestIdSchema } = require('../src/infrastructure/database/migrations/ensureJobsRequestIdSchema');
 
 const dbPath = path.resolve(process.cwd(), 'data', 'casino.db');
 const migrationsDir = path.resolve(process.cwd(), 'src', 'infrastructure', 'database', 'migrations');
@@ -38,6 +39,8 @@ try {
       throw error;
     }
   });
+
+  ensureJobsRequestIdSchema(db);
 
   console.log('\n✓ All migrations completed successfully.');
   db.close();

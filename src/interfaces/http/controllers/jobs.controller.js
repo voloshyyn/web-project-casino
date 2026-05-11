@@ -1,24 +1,28 @@
-function createJob(req, res, next) {
+async function createJob(req, res, next) {
   try {
     const CreateJobUseCase = require('../../../application/job/CreateJobUseCase');
     const SQLiteJobRepository = require('../../../infrastructure/database/repositories/SQLiteJobRepository');
+    const rabbitmq = require('../../../infrastructure/messaging/rabbitmq');
+    const config = require('../../../config/env');
 
     const repository = new SQLiteJobRepository();
-    const createJobUseCase = new CreateJobUseCase(repository);
+    const createJobUseCase = new CreateJobUseCase(repository, rabbitmq, config.RABBITMQ_QUEUE);
 
     // Extract payload from request body
     const { gameId, amount } = req.body;
     const userId = req.userId; // From userScope middleware
+    const requestId = req.header('Idempotency-Key') || req.body.requestId || req.body.idempotencyKey;
 
     // Execute use case
-    const job = createJobUseCase.execute({
+    const result = await createJobUseCase.execute({
       userId,
       gameId,
-      amount
+      amount,
+      requestId
     });
 
-    // Return created job with 201 status
-    res.status(201).json(job);
+    // Return queued job immediately
+    res.status(result.wasCreated ? 202 : 200).json(result.job);
   } catch (error) {
     // Delegate error handling to error middleware
     next(error);
