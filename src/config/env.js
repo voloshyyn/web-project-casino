@@ -7,5 +7,6 @@ module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'info',
   JWT_SECRET: process.env.JWT_SECRET || 'dev-secret',
   RABBITMQ_URL: process.env.RABBITMQ_URL || process.env.AMQP_URL || 'amqp://localhost',
-  RABBITMQ_QUEUE: process.env.RABBITMQ_QUEUE || 'game.requests'
+  RABBITMQ_QUEUE: process.env.RABBITMQ_QUEUE || 'game.requests',
+  RABBITMQ_EVENT_QUEUE: process.env.RABBITMQ_EVENT_QUEUE || 'game.events'
 };

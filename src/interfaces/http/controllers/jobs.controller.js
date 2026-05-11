@@ -21,7 +21,7 @@ async function createJob(req, res, next) {
       requestId
     });
 
-    // Return queued job immediately
+    // Return created job immediately
     res.status(result.wasCreated ? 202 : 200).json(result.job);
   } catch (error) {
     // Delegate error handling to error middleware

@@ -43,7 +43,27 @@ async function publishToQueue(queueName, message) {
   await channel.waitForConfirms();
 }
 
+async function consumeEvents(queueName, messageHandler) {
+  const { channel } = await getBrokerState();
+  
+  await channel.assertQueue(queueName, { durable: true });
+  
+  channel.consume(queueName, async (msg) => {
+    if (msg !== null) {
+      try {
+        const content = JSON.parse(msg.content.toString());
+        await messageHandler(content);
+        channel.ack(msg);
+      } catch (error) {
+        console.error('[RabbitMQ] Error processing message:', error);
+        channel.nack(msg, false, false);
+      }
+    }
+  });
+}
+
 module.exports = {
   publishToQueue,
-  getBrokerState
+  getBrokerState,
+  consumeEvents
 };

@@ -94,14 +94,8 @@ class CreateJobUseCase {
       throw brokerError;
     }
 
-    const queuedJob = await this.jobRepository.updateStatus({
-      id: createdJob.id,
-      userId: createdJob.userId,
-      status: JobStatus.QUEUED
-    });
-
     return {
-      job: queuedJob,
+      job: createdJob,
       wasCreated: true
     };
   }

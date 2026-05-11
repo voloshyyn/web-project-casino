@@ -51,6 +51,39 @@ function runMigrations() {
 console.log('[Server] Starting database initialization...');
 runMigrations();
 
+const { consumeEvents } = require('./infrastructure/messaging/rabbitmq');
+const UpdateJobStatusUseCase = require('./application/job/UpdateJobStatusUseCase');
+const SQLiteJobRepository = require('./infrastructure/database/repositories/SQLiteJobRepository');
+
+async function startEventConsumer() {
+  try {
+    const repository = new SQLiteJobRepository();
+    const updateJobStatusUseCase = new UpdateJobStatusUseCase(repository);
+
+    await consumeEvents(config.RABBITMQ_EVENT_QUEUE, async (event) => {
+      const { jobId, userId, status, result } = event;
+
+      const statusMap = {
+        'progress': 'PROCESSING',
+        'completed': 'DONE',
+        'failed': 'ERROR'
+      };
+
+      updateJobStatusUseCase.execute({
+        id: jobId,
+        userId,
+        status: statusMap[status] || status,
+        result
+      });
+    });
+    console.log(`[RabbitMQ] Consumer listening on queue: ${config.RABBITMQ_EVENT_QUEUE}`);
+  } catch (error) {
+    console.error('[RabbitMQ] Failed to start consumer:', error.message);
+  }
+}
+
+startEventConsumer();
+
 const PORT = config.PORT;
 
 app.listen(PORT, () => {
